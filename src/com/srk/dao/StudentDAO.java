@@ -1,102 +1,133 @@
 package com.srk.dao;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
-import com.srk.vo.Student;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.sql.DataSource;
+
+import vo.Student;
 
 public class StudentDAO {
-
-    private static final String DB_URL = "jdbc:mysql://database-1.clmwg2gcc2ju.ap-southeast-1.rds.amazonaws.com:3306/studentdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
-    private static final String DB_USERNAME = "studentdb";
-    private static final String DB_PASSWORD = "viki12345678";
-
-    public Connection getConnection() throws SQLException {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            return DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
-        } catch (ClassNotFoundException e) {
-            throw new SQLException("MySQL Driver not found.", e);
-        }
-    }
-
-    // ✅ Insert new student
-    public int saveStudent(Student student) {
-        String sql = "INSERT INTO students (name, address, age, qualification, percentage, year_passed) VALUES (?, ?, ?, ?, ?, ?)";
-        try (Connection con = getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setString(1, student.getName());
-            ps.setString(2, student.getAddress());
-            ps.setInt(3, student.getAge());
-            ps.setString(4, student.getQualification());
-            ps.setDouble(5, student.getPercentage());
-            ps.setString(6, student.getYearPassed());
-
-            return ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    // ✅ Get all students
-    public List<Student> getAllStudents() {
-        List<Student> list = new ArrayList<>();
-        String sql = "SELECT * FROM students";
-        try (Connection con = getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                Student s = new Student();
-                s.setId(rs.getInt("id"));
-                s.setName(rs.getString("name"));
-                s.setAddress(rs.getString("address"));
-                s.setAge(rs.getInt("age"));
-                s.setQualification(rs.getString("qualification"));
-                s.setPercentage(rs.getDouble("percentage"));
-                s.setYearPassed(rs.getString("year_passed"));
-                list.add(s);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
-    // ✅ Delete student
-    public int deleteStudent(int id) {
-        String sql = "DELETE FROM students WHERE id=?";
-        try (Connection con = getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setInt(1, id);
-            return ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-    // ✅ Update student
-    public int updateStudent(Student student) {
-        String sql = "UPDATE students SET name=?, address=?, age=?, qualification=?, percentage=?, year_passed=? WHERE id=?";
-        try (Connection con = getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
-            ps.setString(1, student.getName());
-            ps.setString(2, student.getAddress());
-            ps.setInt(3, student.getAge());
-            ps.setString(4, student.getQualification());
-            ps.setDouble(5, student.getPercentage());
-            ps.setString(6, student.getYearPassed());
-            ps.setInt(7, student.getId());
-
-            return ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
+	/*public static Connection getConnection(){  
+        Connection con=null;  
+        try{  
+            Class.forName("com.mysql.jdbc.Driver");  
+            con=DriverManager.getConnection("jdbc:mysql://localhost:3306/test","root","root");  
+        }catch(Exception e){System.out.println(e);}  
+        return con;  
+    }*/
+	
+	public static Connection getConnection() throws Exception {
+		Connection conn=null;
+		Context initContext = new InitialContext();
+		Context envContext = (Context) initContext.lookup("java:comp/env");
+		DataSource ds = (DataSource) envContext.lookup("jdbc/TestDB");
+		conn = ds.getConnection();
+		return conn; 
+	}
+	public static void main(String[] args) {
+		
+	}
+    public static int saveStudent(Student std){  
+        int status=0;  
+        try{  
+            Connection con=StudentDAO.getConnection();  
+            PreparedStatement ps=con.prepareStatement("insert into students(student_name,student_addr,student_age,student_qual,student_percent,student_year_passed) values (?,?,?,?,?,?)");  
+            ps.setString(1,std.getStudentName());  
+            ps.setString(2,std.getStudentAddr());  
+            ps.setString(3,std.getAge());  
+            ps.setString(4,std.getQualification());  
+            ps.setString(5,std.getPercentage());  
+            ps.setString(6,std.getYearPassed());
+              
+            status=ps.executeUpdate();  
+              
+            con.close();  
+        }catch(Exception ex){ex.printStackTrace();}  
+          
+        return status;  
+    }  
+    public static int updateStudent(Student std){  
+        int status=0;  
+        try{  
+            Connection con=StudentDAO.getConnection();  
+            PreparedStatement ps=con.prepareStatement("update students set student_name=?,student_addr=?,student_age=?,student_qual=?,student_percent=?,student_year_passed=? where student_id=?");  
+            ps.setString(1,std.getStudentName());  
+            ps.setString(2,std.getStudentAddr());  
+            ps.setString(3,std.getAge());  
+            ps.setString(4,std.getQualification());  
+            ps.setString(5,std.getPercentage());  
+            ps.setString(6,std.getYearPassed());
+            ps.setInt(7, std.getStudentId());
+              
+            status=ps.executeUpdate();  
+              
+            con.close();  
+        }catch(Exception ex){ex.printStackTrace();}  
+          
+        return status;  
+    }  
+    public static int deleteStudent(int stdId){  
+        int status=0;  
+        try{  
+            Connection con=StudentDAO.getConnection();  
+            PreparedStatement ps=con.prepareStatement("delete from students where student_id=?");  
+            ps.setInt(1,stdId);  
+            status=ps.executeUpdate();  
+              
+            con.close();  
+        }catch(Exception e){e.printStackTrace();}  
+          
+        return status;  
+    }  
+    public static Student getStudentById(int StdId){  
+    	Student student=new Student();  
+          
+        try{  
+            Connection con=StudentDAO.getConnection();  
+            PreparedStatement ps=con.prepareStatement("select * from students where student_id=?");  
+            ps.setInt(1,StdId);  
+            ResultSet rs=ps.executeQuery();  
+            if(rs.next()){  
+            	student.setStudentId(rs.getInt(1));
+            	student.setStudentName(rs.getString(2));
+            	student.setStudentAddr(rs.getString(3));
+            	student.setAge(rs.getString(4));
+            	student.setQualification(rs.getString(5));
+            	student.setPercentage(rs.getString(6));
+            	student.setYearPassed(rs.getString(7));
+                 
+            }  
+            con.close();  
+        }catch(Exception ex){ex.printStackTrace();}  
+          
+        return student;  
+    }  
+    public static List<Student> getAllStudents(){  
+        List<Student> students=new ArrayList<Student>();  
+          
+        try{  
+            Connection con=StudentDAO.getConnection();  
+            PreparedStatement ps=con.prepareStatement("select * from students");  
+            ResultSet rs=ps.executeQuery();  
+            while(rs.next()){  
+            	Student student=new Student();  
+            	student.setStudentId(rs.getInt(1));
+            	student.setStudentName(rs.getString(2));
+            	student.setStudentAddr(rs.getString(3));
+            	student.setAge(rs.getString(4));
+            	student.setQualification(rs.getString(5));
+            	student.setPercentage(rs.getString(6));
+            	student.setYearPassed(rs.getString(7));  
+            	students.add(student);  
+            }  
+            con.close();  
+        }catch(Exception e){e.printStackTrace();}  
+          
+        return students;  
+    }  
 }
